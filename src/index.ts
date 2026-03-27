@@ -11,9 +11,9 @@ bot.start(async (ctx) => {
       "Pacifica Notify Bot is live.",
       "",
       "Commands:",
-      "/track <wallet> - track a wallet",
-      "/untrack <wallet> - stop tracking a wallet",
-      "/list - show tracked wallets",
+      "/track <solana_account> - track a Pacifica Solana account",
+      "/untrack <solana_account> - stop tracking an account",
+      "/list - show tracked accounts",
     ].join("\n")
   );
 });

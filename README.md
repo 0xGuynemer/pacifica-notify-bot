@@ -43,12 +43,13 @@ npm start
 
 ## Notes
 
-This MVP assumes Pacifica public REST endpoints can return account and position data by wallet address using:
+This bot uses Solana-format Pacifica account identifiers via:
 
-- `GET /account?walletAddress=...`
-- `GET /positions?walletAddress=...`
+- `GET /account?account=<solana_address>`
+- `GET /positions?account=<solana_address>`
+- `GET /trades/history?account=<solana_address>`
 
-If Pacifica uses a different query shape, adapt `src/pacifica.ts` accordingly.
+Users should submit a Solana account address when tracking.
 
 ## Next improvements
 

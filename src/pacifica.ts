@@ -6,47 +6,75 @@ const api = axios.create({
   timeout: 15000,
 });
 
+export type PacificaAccount = {
+  balance?: string;
+  account_equity?: string;
+  available_to_spend?: string;
+  available_to_withdraw?: string;
+  total_margin_used?: string;
+  cross_mmr?: string;
+  positions_count?: number;
+  orders_count?: number;
+  stop_orders_count?: number;
+  updated_at?: number;
+  [key: string]: unknown;
+};
+
 export type PacificaPosition = {
   symbol: string;
+  side: string;
+  amount: string;
+  entry_price?: string;
+  margin?: string;
+  funding?: string;
+  isolated?: boolean;
+  liquidation_price?: string;
+  created_at?: number;
+  updated_at?: number;
+  [key: string]: unknown;
+};
+
+export type PacificaTrade = {
+  history_id: number;
+  order_id?: number;
+  symbol: string;
+  amount: string;
+  price: string;
+  entry_price?: string;
+  fee?: string;
+  pnl?: string;
+  event_type?: string;
   side?: string;
-  size?: number;
-  entryPrice?: number;
-  markPrice?: number;
-  liquidationPrice?: number;
-  unrealizedPnl?: number;
+  created_at: number;
+  cause?: string;
   [key: string]: unknown;
 };
 
 export type WalletSnapshot = {
   walletAddress: string;
   fetchedAt: string;
-  account?: unknown;
+  account: PacificaAccount | null;
   positions: PacificaPosition[];
+  trades: PacificaTrade[];
 };
 
-function normalizePositions(payload: unknown): PacificaPosition[] {
-  if (Array.isArray(payload)) return payload as PacificaPosition[];
-  if (payload && typeof payload === "object") {
-    const obj = payload as Record<string, unknown>;
-    if (Array.isArray(obj.positions)) return obj.positions as PacificaPosition[];
-    if (Array.isArray(obj.data)) return obj.data as PacificaPosition[];
-  }
-  return [];
+async function getData<T>(path: string, account: string): Promise<T> {
+  const res = await api.get(path, { params: { account } });
+  return res.data.data as T;
 }
 
 export async function fetchWalletSnapshot(walletAddress: string): Promise<WalletSnapshot> {
-  const [accountRes, positionsRes] = await Promise.allSettled([
-    api.get("/account", { params: { walletAddress } }),
-    api.get("/positions", { params: { walletAddress } }),
+  const [account, positions, trades] = await Promise.all([
+    getData<PacificaAccount>("/account", walletAddress).catch(() => null),
+    getData<PacificaPosition[]>("/positions", walletAddress).catch(() => []),
+    getData<PacificaTrade[]>("/trades/history", walletAddress).catch(() => []),
   ]);
-
-  const account = accountRes.status === "fulfilled" ? accountRes.value.data : null;
-  const positionsData = positionsRes.status === "fulfilled" ? positionsRes.value.data : null;
 
   return {
     walletAddress,
     fetchedAt: new Date().toISOString(),
     account,
-    positions: normalizePositions(positionsData),
+    positions,
+    trades: trades.slice(0, 25),
   };
 }
